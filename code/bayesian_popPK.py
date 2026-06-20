@@ -230,7 +230,13 @@ def run_bayesian_popPK(drug='Paracetamol', n_draws=500, n_tune=300):
     return results
 
 # ── Plot posteriors ────────────────────────────────────────────────────────────
-def plot_posteriors(results, drug='Paracetamol'):
+def plot_posteriors(results, drug='Paracetamol', out_dir=None):
+    from pathlib import Path
+    if out_dir is None:
+        out_dir = Path(__file__).resolve().parent.parent / "figures"
+    out_dir = Path(out_dir)
+    out_dir.mkdir(exist_ok=True)
+
     params = ['F', 'ka', 'ke', 'Vd']
     units  = ['(fraction)', '(/h)', '(/h)', '(L)']
 
@@ -260,7 +266,7 @@ def plot_posteriors(results, drug='Paracetamol'):
     plt.suptitle(f'Bayesian PopPK Posterior Distributions — {drug}\nEarth vs Space',
                  color='white', fontsize=12, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('/home/claude/spacepk/validation/bayesian_posteriors.png',
+    plt.savefig(out_dir / "bayesian_posteriors.png",
                 dpi=150, bbox_inches='tight', facecolor='#0a0a1a')
     print("  Posterior plot saved")
 

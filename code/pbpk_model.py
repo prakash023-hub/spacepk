@@ -332,9 +332,12 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
     }
 
 if __name__ == '__main__':
-    import sys
-    sys.path.insert(0, '/home/claude/spacepk')
-    from pipeline.drug_properties import analyze_drug
+    from pathlib import Path
+    from drug_properties import analyze_drug
+
+    ROOT = Path(__file__).resolve().parent.parent
+    OUT = ROOT / "figures"
+    OUT.mkdir(exist_ok=True)
 
     print("SPACE PK PIPELINE — LAYER 2: PBPK MODEL")
     print("CPT: Pharmacometrics & Systems Pharmacology\n")
@@ -369,6 +372,6 @@ if __name__ == '__main__':
     plt.suptitle('PBPK: Paracetamol — Earth vs Space (30-day mission)',
                  color='white', fontsize=12, fontweight='bold')
     plt.tight_layout()
-    plt.savefig('/home/claude/spacepk/validation/pbpk_layer2.png',
+    plt.savefig(OUT / "pbpk_layer2.png",
                 dpi=150, bbox_inches='tight', facecolor='#0a0a1a')
     print("\n✅ Layer 2 complete — PBPK plot saved")
