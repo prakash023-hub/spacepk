@@ -7,6 +7,7 @@ Posterior space parameter estimation
 ================================================================================
 """
 
+import argparse
 import numpy as np
 import pymc as pm
 import pytensor.tensor as pt
@@ -229,6 +230,25 @@ def run_bayesian_popPK(drug='Paracetamol', n_draws=500, n_tune=300):
 
     return results
 
+
+def compute_bayesian_dose_ci(results, earth_dose_mg=500.0):
+    """Posterior dose factor to match Earth Cmax in space (ratio of predicted Cmax)."""
+    e = results['earth']['posteriors']
+    s = results['space']['posteriors']
+    dose = earth_dose_mg
+    cmax_e = (e['F'] * dose * e['ka']) / (e['Vd'] * (e['ka'] - e['ke'] + 1e-6))
+    cmax_s = (s['F'] * dose * s['ka']) / (s['Vd'] * (s['ka'] - s['ke'] + 1e-6))
+    ratio = cmax_e / (cmax_s + 1e-6)
+    return {
+        'earth_dose_mg': earth_dose_mg,
+        'space_dose_mean_mg': round(float(ratio.mean() * earth_dose_mg), 1),
+        'space_dose_lo_mg': round(float(np.percentile(ratio, 2.5) * earth_dose_mg), 1),
+        'space_dose_hi_mg': round(float(np.percentile(ratio, 97.5) * earth_dose_mg), 1),
+        'factor_mean': round(float(ratio.mean()), 3),
+        'factor_lo': round(float(np.percentile(ratio, 2.5)), 3),
+        'factor_hi': round(float(np.percentile(ratio, 97.5)), 3),
+    }
+
 # ── Plot posteriors ────────────────────────────────────────────────────────────
 def plot_posteriors(results, drug='Paracetamol', out_dir=None):
     from pathlib import Path
@@ -272,8 +292,21 @@ def plot_posteriors(results, drug='Paracetamol', out_dir=None):
 
 # ── Run ────────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='SpacePK Bayesian PopPK')
+    parser.add_argument('--fast', action='store_true', help='Quick demo (500 draws)')
+    parser.add_argument('--full', action='store_true', help='Publication quality (2000 draws)')
+    args = parser.parse_args()
+    n_draws, n_tune = (2000, 1000) if args.full else (500, 300)
+
     print("SPACE PK PIPELINE — LAYER 3: BAYESIAN POPUPK")
     print("CPT: Pharmacometrics & Systems Pharmacology\n")
-    results = run_bayesian_popPK('Paracetamol', n_draws=500, n_tune=300)
+    results = run_bayesian_popPK('Paracetamol', n_draws=n_draws, n_tune=n_tune)
+    dose_ci = compute_bayesian_dose_ci(results)
+    print(f"\n  BAYESIAN DOSE RECOMMENDATION (95% CI):")
+    print(f"    Earth dose     : {dose_ci['earth_dose_mg']:.0f} mg")
+    print(f"    Space dose     : {dose_ci['space_dose_mean_mg']:.0f} mg "
+          f"[{dose_ci['space_dose_lo_mg']:.0f}–{dose_ci['space_dose_hi_mg']:.0f}]")
+    print(f"    Factor         : ×{dose_ci['factor_mean']:.2f} "
+          f"[{dose_ci['factor_lo']:.2f}–{dose_ci['factor_hi']:.2f}]")
     plot_posteriors(results)
     print("\n✅ Layer 3 complete")

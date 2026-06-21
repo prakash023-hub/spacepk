@@ -157,6 +157,16 @@ def get_space_modifiers(mission_days=30, drug_bcs='I'):
     Gandia 2003, Kovachevich 2009, Dello Russo 2022,
     Polyakov 2021, Leach 1981
     """
+    if mission_days == 0:
+        return {
+            'phase': 'earth',
+            'mission_days': 0,
+            'ka_factor': 1.0,
+            'F_factor': 1.0,
+            'Vd_factor': 1.0,
+            'ke_factor': 1.0,
+        }
+
     # Phase-specific modifications
     if mission_days <= 3:
         phase = 'acute'
@@ -199,9 +209,33 @@ def get_space_modifiers(mission_days=30, drug_bcs='I'):
         'ke_factor': round(ke_factor, 3)
     }
 
+def _build_profile(drug_name, smiles, dose_mg, body_weight_kg, mission_days,
+                   mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
+                   pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
+                   F_space, Vd_space, ke_space, ka_space):
+    return {
+        'drug_name': drug_name,
+        'smiles': smiles,
+        'dose_mg': dose_mg,
+        'body_weight_kg': body_weight_kg,
+        'mission_days': mission_days,
+        'MW': mw, 'logP': logP, 'HBD': hbd, 'HBA': hba,
+        'PSA': psa, 'QED': qed, 'BCS': bcs, 'PgP': pgp,
+        'lipinski_ok': lipinski,
+        'F_earth': F, 'Vd_earth': Vd, 'ke_earth': ke,
+        'ka_earth': ka, 't12_earth': t12, 'protein_binding': pb,
+        'F_space': F_space, 'Vd_space': Vd_space,
+        'ke_space': ke_space, 'ka_space': ka_space,
+        'space_phase': space['phase'],
+        'space_modifiers': space,
+    }
+
+# Drugs with literature space-PK data or ISS-relevant profiles
+DRUG_LIST = list(DRUG_DATABASE.keys())
+
 # ── MAIN FUNCTION: Analyze any drug ──────────────────────────────────────────
 def analyze_drug(drug_name, smiles=None, dose_mg=None,
-                 mission_days=30, body_weight_kg=75):
+                 mission_days=30, body_weight_kg=75, verbose=True):
     """
     Complete drug property analysis for Space PK simulation
     
@@ -215,9 +249,10 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
     Returns:
         dict — complete drug profile + space modifiers
     """
-    print(f"\n{'='*60}")
-    print(f"  DRUG ANALYSIS: {drug_name}")
-    print(f"{'='*60}")
+    if verbose:
+        print(f"\n{'='*60}")
+        print(f"  DRUG ANALYSIS: {drug_name}")
+        print(f"{'='*60}")
 
     # Get from database or use provided SMILES
     if drug_name in DRUG_DATABASE:
@@ -278,6 +313,14 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
     ka_space = (ka * space['ka_factor']) if ka else None
 
     # ── Print results ────────────────────────────────────────────────────────
+    if not verbose:
+        return _build_profile(
+            drug_name, smiles, dose_mg, body_weight_kg, mission_days,
+            mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
+            pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
+            F_space, Vd_space, ke_space, ka_space,
+        )
+
     print(f"\n📊 MOLECULAR PROPERTIES (RDKit)")
     print(f"  MW              : {mw:.2f} g/mol")
     print(f"  LogP            : {logP:.2f}")
@@ -312,24 +355,12 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
     print(f"  ke (Space)      : {ke_space:.4f} /h")
     if ka_space: print(f"  ka (Space)      : {ka_space:.4f} /h")
 
-    return {
-        'drug_name': drug_name,
-        'smiles': smiles,
-        'dose_mg': dose_mg,
-        'body_weight_kg': body_weight_kg,
-        'mission_days': mission_days,
-        # Molecular
-        'MW': mw, 'logP': logP, 'HBD': hbd, 'HBA': hba,
-        'PSA': psa, 'QED': qed, 'BCS': bcs, 'PgP': pgp,
-        # Earth PK
-        'F_earth': F, 'Vd_earth': Vd, 'ke_earth': ke,
-        'ka_earth': ka, 't12_earth': t12, 'protein_binding': pb,
-        # Space PK
-        'F_space': F_space, 'Vd_space': Vd_space,
-        'ke_space': ke_space, 'ka_space': ka_space,
-        'space_phase': space['phase'],
-        'space_modifiers': space,
-    }
+    return _build_profile(
+        drug_name, smiles, dose_mg, body_weight_kg, mission_days,
+        mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
+        pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
+        F_space, Vd_space, ke_space, ka_space,
+    )
 
 # ── Run all drugs ─────────────────────────────────────────────────────────────
 if __name__ == '__main__':

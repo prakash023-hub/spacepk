@@ -4,6 +4,8 @@ matplotlib>=3.8.0
 pymc>=5.10.0
 arviz>=0.17.0,<1.0
 pytensor>=2.18.0
+streamlit>=1.28.0
+pandas>=2.0.0
 
 # RDKit: install via conda (recommended on Mac):
 #   conda install -c conda-forge rdkit

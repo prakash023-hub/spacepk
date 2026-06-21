@@ -1,54 +1,94 @@
 # SpacePK Framework
 
-Physiologically-based pharmacokinetic (PBPK) modeling for Earth vs spaceflight conditions.
+**Integrated cheminformatics → PBPK → Bayesian PopPK for Earth vs spaceflight pharmacokinetics**
+
+Physiologically-based pharmacokinetic modeling with mission-phase space physiology modifiers and Bayesian uncertainty quantification for astronaut dose adjustment.
+
+## Novel contribution
+
+SpacePK connects three layers that are usually published separately:
+
+1. **RDKit molecular descriptors** → PBPK parameterization (BCS, P-gp, Lipinski)
+2. **7-compartment mechanistic PBPK** with acute / adaptation / chronic mission-phase physiology
+3. **Bayesian PopPK** with 95% credible intervals on space dose adjustment
+
+Literature anchors: Gandia 2003, Kovachevich 2009, Polyakov 2021, Leach 1981, Dello Russo 2022.
 
 ## Structure
 
 ```
 spacepk/
-├── code/           # Layer 1–3 Python pipeline
-├── data/           # PK master datasets (CSV)
-├── figures/        # Output plots
-├── papers/         # Source PDFs
-└── outputs/        # Generated results
+├── app.py              # Streamlit flight-surgeon decision support UI
+├── run_app.sh          # Launch interactive app
+├── run_pipeline.sh     # Run all layers + sensitivity
+├── code/
+│   ├── drug_properties.py      # Layer 1 — RDKit + space modifiers
+│   ├── pbpk_model.py           # Layer 2 — 7-compartment PBPK
+│   ├── bayesian_popPK.py       # Layer 3 — PyMC Bayesian PopPK
+│   └── mission_sensitivity.py  # Mission-day sensitivity analysis
+├── data/               # PK master datasets (63 rows, 15 papers)
+├── figures/            # Output plots
+└── papers/             # Source PDFs
+```
+
+## Quick start
+
+### Setup (Mac + Anaconda)
+
+```bash
+conda install -c conda-forge rdkit pymc numpy scipy matplotlib arviz pytensor
+pip install "arviz>=0.17,<1.0" streamlit
+cd ~/spacepk
+chmod +x run_app.sh run_pipeline.sh
+```
+
+### Run full research pipeline
+
+```bash
+./run_pipeline.sh
+```
+
+Publication-quality Bayesian run (slower):
+
+```bash
+SPACEPK_FAST=0 ./run_pipeline.sh
+```
+
+### Launch interactive app
+
+```bash
+./run_app.sh
+```
+
+Or:
+
+```bash
+streamlit run app.py
 ```
 
 ## Layers
 
-| Layer | File | Purpose |
-|-------|------|---------|
-| 1 | `drug_properties.py` | RDKit molecular properties → PBPK inputs |
-| 2 | `pbpk_model.py` | 7-compartment PBPK, Earth vs space |
-| 3 | `bayesian_popPK.py` | Bayesian PopPK (PyMC) |
+| Layer | Script | Output |
+|-------|--------|--------|
+| 1 | `drug_properties.py` | Molecular properties + space-adjusted PK inputs |
+| 2 | `pbpk_model.py` | Earth vs space concentration curves + dose recommendation |
+| 3 | `bayesian_popPK.py` | Posterior distributions + dose 95% CI |
+| + | `mission_sensitivity.py` | Dose factor vs mission day (1–180) |
 
-## Setup (Mac)
+## Drugs modeled
 
-```bash
-cd ~/spacepk
-chmod +x setup.sh
-./setup.sh
-```
+Paracetamol, Ibuprofen, Ciprofloxacin, Promethazine, Scopolamine, Lidocaine
 
-Or manually with Anaconda:
+## GitHub
 
-```bash
-conda install -c conda-forge rdkit pymc numpy scipy matplotlib arviz pytensor
-cd ~/spacepk/code
-python drug_properties.py
-python pbpk_model.py
-python bayesian_popPK.py
-```
+https://github.com/prakash023-hub/spacepk
 
-## Data
+## Citation (draft)
 
-- `data/space_pk_master_v2.csv` — 63 rows, 15 papers
-- `data/paracetamol_pk_clean.csv` — paracetamol subset
+> SpacePK: An Integrated Cheminformatics–PBPK–Bayesian Framework for Earth–Spaceflight Pharmacokinetic Comparison. CPT: Pharmacometrics & Systems Pharmacology (in preparation).
 
-## Git
+## Limitations
 
-```bash
-git remote add origin https://github.com/YOUR_USERNAME/spacepk.git
-git push -u origin main
-```
-
-**Do not commit:** large PDFs if repo size is an issue — use Git LFS or omit papers/
+- Small N in real spaceflight PK studies; Bayesian priors carry uncertainty
+- HDT is an Earth analog — not identical to microgravity
+- No formulation stability (radiation, humidity) or drug–drug interactions yet

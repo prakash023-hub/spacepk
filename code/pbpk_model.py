@@ -222,6 +222,30 @@ def extract_pk_pbpk(t, C):
     return {'Cmax': round(Cmax,3), 'Tmax': round(Tmax,3),
             'AUC': round(AUC,3), 't12': round(t12,3) if not np.isnan(t12) else 'NA'}
 
+def compute_dose_recommendation(drug_profile, pk_earth, pk_space):
+    """Match Earth Cmax exposure with adjusted space dose."""
+    earth_dose = drug_profile['dose_mg']
+    cmax_e = pk_earth.get('Cmax', 0)
+    cmax_s = pk_space.get('Cmax', 0)
+    auc_e = pk_earth.get('AUC', 0)
+    auc_s = pk_space.get('AUC', 0)
+
+    if not cmax_e or not cmax_s or cmax_s <= 0:
+        return None
+
+    factor_cmax = cmax_e / cmax_s
+    factor_auc = (auc_e / auc_s) if auc_s and auc_s > 0 else factor_cmax
+    factor = (factor_cmax + factor_auc) / 2
+
+    return {
+        'earth_dose_mg': earth_dose,
+        'space_dose_mg': round(earth_dose * factor_cmax, 1),
+        'space_dose_auc_mg': round(earth_dose * factor_auc, 1),
+        'adjustment_factor': round(factor_cmax, 3),
+        'adjustment_pct': round((factor_cmax - 1) * 100, 1),
+        'rationale': 'Cmax-matched dose to preserve peak exposure',
+    }
+
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=True):
     """
@@ -311,13 +335,14 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
             print(f"{param+' ('+unit+')':<15} {str(val_e):>12} {str(val_s):>12} {change:>10}")
 
         # Dose recommendation
-        if pk_earth['Cmax'] > 0 and pk_space['Cmax'] > 0:
-            dose_adj = pk_earth['Cmax'] / pk_space['Cmax']
-            space_dose = drug_profile['dose_mg'] * dose_adj
+        dose_rec = compute_dose_recommendation(drug_profile, pk_earth, pk_space)
+        if dose_rec:
             print(f"\n🎯 DOSE RECOMMENDATION:")
-            print(f"   Earth dose  : {drug_profile['dose_mg']:.0f} mg")
-            print(f"   Space dose  : {space_dose:.0f} mg (×{dose_adj:.2f})")
-            print(f"   Adjustment  : {(1-dose_adj)*100:+.1f}%")
+            print(f"   Earth dose  : {dose_rec['earth_dose_mg']:.0f} mg")
+            print(f"   Space dose  : {dose_rec['space_dose_mg']:.0f} mg (×{dose_rec['adjustment_factor']:.2f})")
+            print(f"   Adjustment  : {dose_rec['adjustment_pct']:+.1f}%")
+
+    dose_rec = compute_dose_recommendation(drug_profile, pk_earth, pk_space)
 
     return {
         't': t,
@@ -325,6 +350,7 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
         'C_liver_e': C_liver_e, 'C_liver_s': C_liver_s,
         'C_tissue_e': C_tissue_e, 'C_tissue_s': C_tissue_s,
         'pk_earth': pk_earth, 'pk_space': pk_space,
+        'dose_recommendation': dose_rec,
         'drug_params_earth': drug_params_earth,
         'drug_params_space': drug_params_space,
         'physio_earth': physio_earth,
