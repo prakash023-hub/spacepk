@@ -12,93 +12,17 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors, Crippen
 from rdkit.Chem import QED
 
-# ── Drug Database (SMILES + literature PK) ───────────────────────────────────
-DRUG_DATABASE = {
-    'Paracetamol': {
-        'smiles': 'CC(=O)Nc1ccc(O)cc1',
-        'dose_mg': 500,
-        'lit_F': 0.85,
-        'lit_Vd_Lkg': 0.90,
-        'lit_t12_h': 2.5,
-        'lit_ka_h': 1.5,
-        'lit_ke_h': 0.277,
-        'protein_binding': 0.15,
-        'bcs_class': 1,
-        'space_data': True,
-        'cyp': 'CYP2E1/CYP3A4',
-        'transporter': 'None'
-    },
-    'Ibuprofen': {
-        'smiles': 'CC(C)Cc1ccc(C(C)C(=O)O)cc1',
-        'dose_mg': 600,
-        'lit_F': 0.80,
-        'lit_Vd_Lkg': 0.15,
-        'lit_t12_h': 2.0,
-        'lit_ka_h': 2.0,
-        'lit_ke_h': 0.347,
-        'protein_binding': 0.99,
-        'bcs_class': 2,
-        'space_data': True,
-        'cyp': 'CYP2C9',
-        'transporter': 'OATP1B1'
-    },
-    'Ciprofloxacin': {
-        'smiles': 'O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O',
-        'dose_mg': 250,
-        'lit_F': 0.70,
-        'lit_Vd_Lkg': 2.50,
-        'lit_t12_h': 4.0,
-        'lit_ka_h': 0.9,
-        'lit_ke_h': 0.173,
-        'protein_binding': 0.30,
-        'bcs_class': 4,
-        'space_data': True,
-        'cyp': 'CYP1A2',
-        'transporter': 'P-gp'
-    },
-    'Promethazine': {
-        'smiles': 'CN(C)CCCN1c2ccccc2Sc2ccccc21',
-        'dose_mg': 25,
-        'lit_F': 0.25,
-        'lit_Vd_Lkg': 13.0,
-        'lit_t12_h': 12.0,
-        'lit_ka_h': 0.5,
-        'lit_ke_h': 0.058,
-        'protein_binding': 0.76,
-        'bcs_class': 1,
-        'space_data': True,
-        'cyp': 'CYP2D6',
-        'transporter': 'None'
-    },
-    'Scopolamine': {
-        'smiles': 'CN1C2CC(OC(=O)C(CO)c3ccccc3)CC1C2',
-        'dose_mg': 0.4,
-        'lit_F': 0.60,
-        'lit_Vd_Lkg': 1.35,
-        'lit_t12_h': 8.0,
-        'lit_ka_h': 0.8,
-        'lit_ke_h': 0.087,
-        'protein_binding': 0.60,
-        'bcs_class': 1,
-        'space_data': True,
-        'cyp': 'CYP3A4',
-        'transporter': 'None'
-    },
-    'Lidocaine': {
-        'smiles': 'CCN(CC)CC(=O)Nc1c(C)cccc1C',
-        'dose_mg': 75,
-        'lit_F': 0.35,
-        'lit_Vd_Lkg': 1.30,
-        'lit_t12_h': 1.8,
-        'lit_ka_h': 'IV',
-        'lit_ke_h': 0.385,
-        'protein_binding': 0.70,
-        'bcs_class': 1,
-        'space_data': True,
-        'cyp': 'CYP3A4/CYP1A2',
-        'transporter': 'None'
-    },
-}
+from iss_drug_catalog import ISS_DRUG_CATALOG, catalog_as_database, search_drugs
+
+# ── Drug Database (ISS kit + literature PK) ───────────────────────────────────
+DRUG_DATABASE = catalog_as_database()
+
+# Alias → canonical name
+DRUG_ALIASES = {}
+for _name, _meta in ISS_DRUG_CATALOG.items():
+    for _alias in _meta.get('aliases', []):
+        DRUG_ALIASES[_alias.lower()] = _name
+DRUG_ALIASES['acetaminophen'] = 'Paracetamol'
 
 # ── BCS Classification thresholds ────────────────────────────────────────────
 def classify_bcs(logP, mw, solubility_est):
@@ -231,7 +155,7 @@ def _build_profile(drug_name, smiles, dose_mg, body_weight_kg, mission_days,
     }
 
 # Drugs with literature space-PK data or ISS-relevant profiles
-DRUG_LIST = list(DRUG_DATABASE.keys())
+DRUG_LIST = sorted(DRUG_DATABASE.keys())
 
 # ── MAIN FUNCTION: Analyze any drug ──────────────────────────────────────────
 def analyze_drug(drug_name, smiles=None, dose_mg=None,
@@ -255,8 +179,13 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
         print(f"{'='*60}")
 
     # Get from database or use provided SMILES
-    if drug_name in DRUG_DATABASE:
-        db = DRUG_DATABASE[drug_name]
+    lookup = drug_name.strip()
+    if lookup.lower() in DRUG_ALIASES:
+        lookup = DRUG_ALIASES[lookup.lower()]
+
+    if lookup in DRUG_DATABASE:
+        db = DRUG_DATABASE[lookup]
+        drug_name = lookup
         smiles  = db['smiles']
         dose_mg = dose_mg or db['dose_mg']
         lit_data = db

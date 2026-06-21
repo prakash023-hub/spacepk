@@ -77,7 +77,15 @@ streamlit run app.py
 
 ## Drugs modeled
 
-Paracetamol, Ibuprofen, Ciprofloxacin, Promethazine, Scopolamine, Lidocaine
+**41 compounds** in the ISS / spaceflight medical catalog, including:
+
+- Analgesics: Paracetamol, Ibuprofen, Aspirin, Tramadol
+- Antibiotics: Ciprofloxacin, Amoxicillin, Azithromycin, Doxycycline
+- Antiemetics: Promethazine, Scopolamine, Meclizine, Ondansetron
+- Cardiovascular: Nifedipine, Verapamil, Propranolol, Metoprolol, Furosemide
+- And 25+ more ISS-relevant agents
+
+**12 drugs** have direct spaceflight / HDT PK literature; others use literature-estimated PK parameters.
 
 ## GitHub
 

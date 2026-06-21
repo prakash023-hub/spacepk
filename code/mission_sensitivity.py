@@ -11,10 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from drug_properties import DRUG_LIST, analyze_drug
+from iss_drug_catalog import ISS_DRUG_CATALOG
 from pbpk_model import compute_dose_recommendation, run_pbpk_analysis
 
 MISSION_DAYS = [0, 1, 3, 7, 14, 30, 60, 90, 180]
-DEMO_DRUGS = ['Paracetamol', 'Ibuprofen', 'Ciprofloxacin', 'Promethazine']
+DEMO_DRUGS = [d for d in DRUG_LIST if ISS_DRUG_CATALOG.get(d, {}).get('space_data')]
+if len(DEMO_DRUGS) < 4:
+    DEMO_DRUGS = ['Paracetamol', 'Ibuprofen', 'Ciprofloxacin', 'Promethazine']
 
 
 def run_mission_sensitivity(drugs=None, body_weight=75, out_dir=None):
