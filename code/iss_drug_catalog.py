@@ -440,7 +440,9 @@ def catalog_as_database():
 def get_catalog_table():
     """Rows for Streamlit drug browser."""
     rows = []
+    roman = {1: 'I', 2: 'II', 3: 'III', 4: 'IV'}
     for name, e in ISS_DRUG_CATALOG.items():
+        bc = e.get('bcs_class')
         rows.append({
             'Drug': name,
             'Category': e.get('category', 'Other'),
@@ -449,7 +451,7 @@ def get_catalog_table():
             'Dose (mg)': e.get('dose_mg'),
             'Route': 'IV' if e.get('lit_ka_h') == 'IV' else 'Oral',
             't½ (h)': e.get('lit_t12_h'),
-            'BCS': e.get('bcs_class'),
+            'BCS': roman.get(bc, bc),
         })
     return rows
 
@@ -470,7 +472,7 @@ def search_drugs(query='', category=None, iss_only=False, space_data_only=False)
         if space_data_only and not e.get('space_data'):
             continue
         aliases = e.get('aliases', [])
-        hay = ' '.join([name.lower()] + [a.lower() for a in aliases])
+        hay = ' '.join([name.lower(), e.get('category', '').lower()] + [a.lower() for a in aliases])
         if q and q not in hay:
             continue
         out.append(name)

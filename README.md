@@ -91,6 +91,24 @@ streamlit run app.py
 
 https://github.com/prakash023-hub/spacepk
 
+## URLs for publication / submission
+
+| URL | Use in paper? |
+|-----|----------------|
+| `http://localhost:8501` | **No** — only on your Mac |
+| `http://192.168.x.x:8501` | **No** — home Wi‑Fi only |
+| `http://117.254.x.x:8501` | **No** — your public IP; dies when laptop sleeps |
+| **https://github.com/prakash023-hub/spacepk** | **Yes** — code & reproducibility |
+| **https://YOUR-APP.streamlit.app** | **Yes** — live demo (after deploy) |
+
+### Deploy public demo (Streamlit Community Cloud)
+
+1. Push repo to GitHub (already done)
+2. Go to [share.streamlit.io](https://share.streamlit.io) → Sign in with GitHub
+3. **New app** → Repository `prakash023-hub/spacepk` → Branch `main` → Main file `app.py`
+4. Advanced settings → use `environment.yml` (includes RDKit via conda-forge)
+5. Deploy → copy URL like `https://spacepk.streamlit.app` into your paper/Devpost
+
 ## Citation (draft)
 
 > SpacePK: An Integrated Cheminformatics–PBPK–Bayesian Framework for Earth–Spaceflight Pharmacokinetic Comparison. CPT: Pharmacometrics & Systems Pharmacology (in preparation).

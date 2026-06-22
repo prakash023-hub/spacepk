@@ -169,23 +169,31 @@ def simulate_pbpk(drug_name, drug_params_earth, drug_params_space,
     Run PBPK simulation for Earth and Space conditions
     Returns time array and concentration profiles
     """
+    t_end = max(t_end, drug_params_earth.get('t_end', t_end))
     t_span = (0, t_end)
     t_eval = np.linspace(0, t_end, 500)
 
-    # Initial conditions — dose in GI tract
     dose = drug_params_earth['dose_mg']
-    y0 = [dose, 0, 0, 0, 0, 0, 0, 0]
+
+    def _y0(params, physio):
+        if params.get('route') == 'iv':
+            v_v = physio['V_venous']
+            return [0, 0, 0, 0, dose / max(v_v, 0.1), 0, 0, 0]
+        return [dose, 0, 0, 0, 0, 0, 0, 0]
+
+    y0_e = _y0(drug_params_earth, physio_earth)
+    y0_s = _y0(drug_params_space, physio_space)
 
     # ── Earth simulation ──────────────────────────────────────────────────────
     sol_e = solve_ivp(
-        pbpk_odes, t_span, y0, t_eval=t_eval,
+        pbpk_odes, t_span, y0_e, t_eval=t_eval,
         args=(drug_params_earth, physio_earth),
         method='RK45', rtol=1e-6, atol=1e-8
     )
 
     # ── Space simulation ──────────────────────────────────────────────────────
     sol_s = solve_ivp(
-        pbpk_odes, t_span, y0, t_eval=t_eval,
+        pbpk_odes, t_span, y0_s, t_eval=t_eval,
         args=(drug_params_space, physio_space),
         method='RK45', rtol=1e-6, atol=1e-8
     )
@@ -223,12 +231,25 @@ def extract_pk_pbpk(t, C):
             'AUC': round(AUC,3), 't12': round(t12,3) if not np.isnan(t12) else 'NA'}
 
 def compute_dose_recommendation(drug_profile, pk_earth, pk_space):
-    """Match Earth Cmax exposure with adjusted space dose."""
+    """Match Earth exposure with adjusted space dose."""
     earth_dose = drug_profile['dose_mg']
     cmax_e = pk_earth.get('Cmax', 0)
     cmax_s = pk_space.get('Cmax', 0)
     auc_e = pk_earth.get('AUC', 0)
     auc_s = pk_space.get('AUC', 0)
+
+    if drug_profile.get('is_iv'):
+        ke_e = drug_profile['ke_earth']
+        ke_s = max(drug_profile['ke_space'], 1e-6)
+        factor = ke_e / ke_s
+        return {
+            'earth_dose_mg': earth_dose,
+            'space_dose_mg': round(earth_dose * factor, 1),
+            'space_dose_auc_mg': round(earth_dose * factor, 1),
+            'adjustment_factor': round(factor, 3),
+            'adjustment_pct': round((factor - 1) * 100, 1),
+            'rationale': 'IV: clearance-matched dose (ke Earth / ke Space)',
+        }
 
     if not cmax_e or not cmax_s or cmax_s <= 0:
         return None
@@ -253,6 +274,8 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
     drug_profile: output from drug_properties.analyze_drug()
     """
     drug_name = drug_profile['drug_name']
+    is_iv = drug_profile.get('is_iv', False)
+    t_end = max(12, drug_profile.get('t12_earth', 2) * 4)
     
     if verbose:
         print(f"\n{'='*60}")
@@ -278,6 +301,8 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
         'ka': ka_e, 'ke': ke_e,
         'CLh': CLh_e, 'CLr': CLr_e,
         'Kp': 1.0 + drug_profile['logP'] * 0.2,
+        'route': 'iv' if is_iv else 'oral',
+        't_end': t_end,
     }
 
     # ── Space drug parameters ─────────────────────────────────────────────────
@@ -297,6 +322,8 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
         'ka': ka_s, 'ke': ke_s,
         'CLh': CLh_s, 'CLr': CLr_s,
         'Kp': 1.0 + drug_profile['logP'] * 0.2,
+        'route': 'iv' if is_iv else 'oral',
+        't_end': t_end,
     }
 
     # ── Physiology ────────────────────────────────────────────────────────────
@@ -306,7 +333,7 @@ def run_pbpk_analysis(drug_profile, mission_days=30, body_weight=75, verbose=Tru
     # ── Run simulation ────────────────────────────────────────────────────────
     t, sol_e, sol_s = simulate_pbpk(
         drug_name, drug_params_earth, drug_params_space,
-        physio_earth, physio_space
+        physio_earth, physio_space, t_end=t_end,
     )
 
     # Venous blood concentration (systemic) = compartment [4]

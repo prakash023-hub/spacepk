@@ -1,0 +1,17 @@
+name: spacepk
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - rdkit
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - pip
+  - pip:
+      - streamlit>=1.28
+      - plotly>=5.18
+      - pymc>=5.10
+      - "arviz>=0.17,<1.0"
+      - pytensor>=2.18

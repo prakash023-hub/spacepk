@@ -40,6 +40,12 @@ def classify_bcs(logP, mw, solubility_est):
     elif not high_perm and high_sol: return 'III'
     else: return 'IV'
 
+def bcs_from_catalog(bcs_class, logP, mw, sol_est):
+    roman = {1: 'I', 2: 'II', 3: 'III', 4: 'IV'}
+    if bcs_class in roman:
+        return roman[bcs_class]
+    return classify_bcs(logP, mw, sol_est)
+
 # ── P-gp substrate prediction (simplified Lipinski-based) ───────────────────
 def predict_pgp(mol, mw, logP):
     hbd = rdMolDescriptors.CalcNumHBD(mol)
@@ -136,7 +142,7 @@ def get_space_modifiers(mission_days=30, drug_bcs='I'):
 def _build_profile(drug_name, smiles, dose_mg, body_weight_kg, mission_days,
                    mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
                    pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
-                   F_space, Vd_space, ke_space, ka_space):
+                   F_space, Vd_space, ke_space, ka_space, is_iv=False):
     return {
         'drug_name': drug_name,
         'smiles': smiles,
@@ -146,6 +152,8 @@ def _build_profile(drug_name, smiles, dose_mg, body_weight_kg, mission_days,
         'MW': mw, 'logP': logP, 'HBD': hbd, 'HBA': hba,
         'PSA': psa, 'QED': qed, 'BCS': bcs, 'PgP': pgp,
         'lipinski_ok': lipinski,
+        'is_iv': is_iv,
+        'route': 'IV' if is_iv else 'Oral',
         'F_earth': F, 'Vd_earth': Vd, 'ke_earth': ke,
         'ka_earth': ka, 't12_earth': t12, 'protein_binding': pb,
         'F_space': F_space, 'Vd_space': Vd_space,
@@ -217,8 +225,8 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
     # Solubility estimate (ESOL model simplified)
     sol_est = 10 ** (0.5 - 0.01*(mw-350)/50 - 0.5*logP)
 
-    # BCS Classification
-    bcs = classify_bcs(logP, mw, sol_est)
+    # BCS Classification (catalog literature class preferred)
+    bcs = bcs_from_catalog(lit_data.get('bcs_class'), logP, mw, sol_est)
 
     # P-gp prediction
     pgp = predict_pgp(mol, mw, logP)
@@ -231,6 +239,9 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
     t12 = lit_data.get('lit_t12_h', 2.0)
     ke  = 0.693 / t12
     ka  = lit_data.get('lit_ka_h', 1.5) if lit_data.get('lit_ka_h','IV') != 'IV' else None
+    is_iv = ka is None or lit_data.get('lit_ka_h') == 'IV'
+    if is_iv:
+        F = 1.0
 
     # Space modifiers
     space = get_space_modifiers(mission_days, bcs)
@@ -247,7 +258,7 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
             drug_name, smiles, dose_mg, body_weight_kg, mission_days,
             mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
             pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
-            F_space, Vd_space, ke_space, ka_space,
+            F_space, Vd_space, ke_space, ka_space, is_iv,
         )
 
     print(f"\n📊 MOLECULAR PROPERTIES (RDKit)")
@@ -288,7 +299,7 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
         drug_name, smiles, dose_mg, body_weight_kg, mission_days,
         mw, logP, hbd, hba, psa, rotb, arom, qed, lipinski, bcs, pgp,
         pb, F, Vd_per_kg, Vd, t12, ke, ka, space,
-        F_space, Vd_space, ke_space, ka_space,
+        F_space, Vd_space, ke_space, ka_space, is_iv,
     )
 
 # ── Run all drugs ─────────────────────────────────────────────────────────────
