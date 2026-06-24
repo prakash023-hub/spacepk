@@ -14,7 +14,7 @@ import streamlit as st
 CODE_DIR = Path(__file__).resolve().parent / 'code'
 sys.path.insert(0, str(CODE_DIR))
 
-from drug_properties import analyze_drug  # noqa: E402
+from drug_properties import analyze_drug, HAS_RDKIT  # noqa: E402
 from iss_drug_catalog import (  # noqa: E402
     ISS_DRUG_CATALOG,
     get_catalog_table,
@@ -169,6 +169,8 @@ with st.expander('URLs for publication / Devpost / paper (important)'):
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
+    if not HAS_RDKIT:
+        st.caption('☁️ Cloud mode — 41 catalog drugs (precomputed descriptors)')
     st.header('Find a drug')
     search_q = st.text_input('Search name or category', placeholder='ibuprofen, antibiotic…')
     category = st.selectbox('Category', ['All categories'] + get_categories())
@@ -249,7 +251,7 @@ tab_sim, tab_dose, tab_props, tab_catalog, tab_custom = st.tabs([
 ])
 
 with tab_sim:
-    st.plotly_chart(plot_pk_curves(result, drug, mission_days), use_container_width=True)
+    st.plotly_chart(plot_pk_curves(result, drug, mission_days), width='stretch')
 
     left, right = st.columns([1, 1])
     with left:
@@ -265,12 +267,12 @@ with tab_sim:
                 ],
             }),
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
         )
     with right:
         st.markdown('**Mission-day dose factor**')
         st.caption('Shaded bands: acute (0–3d) · adaptation (3–14d) · chronic (14–180d)')
-        st.plotly_chart(plot_dose_timeline(drug, body_weight, dose_mg), use_container_width=True)
+        st.plotly_chart(plot_dose_timeline(drug, body_weight, dose_mg), width='stretch')
 
 with tab_dose:
     if dose_rec:
@@ -361,7 +363,7 @@ with tab_custom:
                     mission_days=mission_days, body_weight_kg=body_weight, verbose=False,
                 )
                 cr = run_pbpk_analysis(cp, mission_days=mission_days, body_weight=body_weight, verbose=False)
-                st.plotly_chart(plot_pk_curves(cr, cname, mission_days), use_container_width=True)
+                st.plotly_chart(plot_pk_curves(cr, cname, mission_days), width='stretch')
                 if cr.get('dose_recommendation'):
                     dr = cr['dose_recommendation']
                     st.success(f"Recommended space dose: **{dr['space_dose_mg']:.0f} mg** (×{dr['adjustment_factor']:.2f})")

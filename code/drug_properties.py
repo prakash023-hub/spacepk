@@ -8,10 +8,16 @@ Auto-parameterization for PBPK model
 """
 
 import numpy as np
-from rdkit import Chem
-from rdkit.Chem import Descriptors, rdMolDescriptors, Crippen
-from rdkit.Chem import QED
 
+try:
+    from rdkit import Chem
+    from rdkit.Chem import Descriptors, rdMolDescriptors, Crippen
+    from rdkit.Chem import QED
+    HAS_RDKIT = True
+except ImportError:
+    HAS_RDKIT = False
+
+from drug_descriptors_cache import DESCRIPTOR_CACHE
 from iss_drug_catalog import ISS_DRUG_CATALOG, catalog_as_database, search_drugs
 
 # ── Drug Database (ISS kit + literature PK) ───────────────────────────────────
@@ -47,13 +53,50 @@ def bcs_from_catalog(bcs_class, logP, mw, sol_est):
     return classify_bcs(logP, mw, sol_est)
 
 # ── P-gp substrate prediction (simplified Lipinski-based) ───────────────────
-def predict_pgp(mol, mw, logP):
-    hbd = rdMolDescriptors.CalcNumHBD(mol)
-    hba = rdMolDescriptors.CalcNumHBA(mol)
-    # Seelig rules for P-gp substrate
+def predict_pgp_from_props(mw, logP, hba):
     if mw > 400 and logP > 2 and hba > 4:
         return True
     return False
+
+def predict_pgp(mol, mw, logP):
+    if mol is not None and HAS_RDKIT:
+        hba = rdMolDescriptors.CalcNumHBA(mol)
+    else:
+        hba = 0
+    return predict_pgp_from_props(mw, logP, hba)
+
+def _descriptors_from_smiles(smiles):
+    """Compute descriptors via RDKit (custom SMILES only)."""
+    if not HAS_RDKIT:
+        raise ImportError(
+            'RDKit is not installed. All 41 catalog drugs work offline; '
+            'custom SMILES requires RDKit (conda install -c conda-forge rdkit).'
+        )
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f'Invalid SMILES: {smiles}')
+    return {
+        'mol': mol,
+        'MW': Descriptors.MolWt(mol),
+        'logP': Crippen.MolLogP(mol),
+        'HBD': rdMolDescriptors.CalcNumHBD(mol),
+        'HBA': rdMolDescriptors.CalcNumHBA(mol),
+        'PSA': rdMolDescriptors.CalcTPSA(mol),
+        'rotb': rdMolDescriptors.CalcNumRotatableBonds(mol),
+        'arom': rdMolDescriptors.CalcNumAromaticRings(mol),
+        'QED': QED.qed(mol),
+    }
+
+def _descriptors_for_catalog(drug_name):
+    """Precomputed descriptors — works on Streamlit Cloud without RDKit."""
+    if drug_name not in DESCRIPTOR_CACHE:
+        raise KeyError(f'No cached descriptors for {drug_name}')
+    d = DESCRIPTOR_CACHE[drug_name]
+    return {
+        'mol': None,
+        'MW': d['MW'], 'logP': d['logP'], 'HBD': d['HBD'], 'HBA': d['HBA'],
+        'PSA': d['PSA'], 'rotb': d['rotb'], 'arom': d['arom'], 'QED': d['QED'],
+    }
 
 # ── Estimate bioavailability from molecular properties ───────────────────────
 def estimate_bioavailability(logP, mw, hbd, hba, psa):
@@ -203,33 +246,37 @@ def analyze_drug(drug_name, smiles=None, dose_mg=None,
         lit_data = {}
         dose_mg = dose_mg or 500
 
-    # Parse molecule
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError(f"Invalid SMILES: {smiles}")
+        lit_data = {}
+        dose_mg = dose_mg or 500
 
-    # ── RDKit descriptors ────────────────────────────────────────────────────
-    mw     = Descriptors.MolWt(mol)
-    logP   = Crippen.MolLogP(mol)
-    hbd    = rdMolDescriptors.CalcNumHBD(mol)
-    hba    = rdMolDescriptors.CalcNumHBA(mol)
-    psa    = rdMolDescriptors.CalcTPSA(mol)
-    rotb   = rdMolDescriptors.CalcNumRotatableBonds(mol)
-    rings  = rdMolDescriptors.CalcNumRings(mol)
-    arom   = rdMolDescriptors.CalcNumAromaticRings(mol)
-    qed    = QED.qed(mol)
+    # Molecular descriptors — catalog uses cache (no RDKit needed on cloud)
+    use_cache = lookup in DESCRIPTOR_CACHE and drug_name in DRUG_DATABASE
+    if use_cache and not (smiles and smiles != DRUG_DATABASE.get(drug_name, {}).get('smiles')):
+        desc = _descriptors_for_catalog(drug_name)
+    else:
+        desc = _descriptors_from_smiles(smiles)
+
+    mol = desc.get('mol')
+    mw = desc['MW']
+    logP = desc['logP']
+    hbd = desc['HBD']
+    hba = desc['HBA']
+    psa = desc['PSA']
+    rotb = desc['rotb']
+    arom = desc['arom']
+    qed = desc['QED']
 
     # Lipinski compliance
-    lipinski = all([mw<=500, logP<=5, hbd<=5, hba<=10])
+    lipinski = all([mw <= 500, logP <= 5, hbd <= 5, hba <= 10])
 
     # Solubility estimate (ESOL model simplified)
-    sol_est = 10 ** (0.5 - 0.01*(mw-350)/50 - 0.5*logP)
+    sol_est = 10 ** (0.5 - 0.01 * (mw - 350) / 50 - 0.5 * logP)
 
     # BCS Classification (catalog literature class preferred)
     bcs = bcs_from_catalog(lit_data.get('bcs_class'), logP, mw, sol_est)
 
     # P-gp prediction
-    pgp = predict_pgp(mol, mw, logP)
+    pgp = predict_pgp(mol, mw, logP) if mol else predict_pgp_from_props(mw, logP, hba)
 
     # PK parameter estimates
     pb  = lit_data.get('protein_binding', 0.5)
