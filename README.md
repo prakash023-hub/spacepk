@@ -99,7 +99,7 @@ https://github.com/prakash023-hub/spacepk
 | `http://192.168.x.x:8501` | **No** — home Wi‑Fi only |
 | `http://117.254.x.x:8501` | **No** — your public IP; dies when laptop sleeps |
 | **https://github.com/prakash023-hub/spacepk** | **Yes** — code & reproducibility |
-| **https://YOUR-APP.streamlit.app** | **Yes** — live demo (after deploy) |
+| **https://prakash023-hub-spacepk-app-kua6sq.streamlit.app** | **Yes** — live demo (after deploy) |
 
 ### Deploy public demo (Streamlit Community Cloud)
 
