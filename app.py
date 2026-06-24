@@ -333,7 +333,7 @@ with tab_catalog:
     st.dataframe(
         df_cat,
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
         height=500,
         column_config={
             'Dose (mg)': st.column_config.NumberColumn(format='%.2f'),
