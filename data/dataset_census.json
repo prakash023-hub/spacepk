@@ -1,0 +1,54 @@
+{
+  "source": "space_pk_master_v2.csv",
+  "rows": 62,
+  "unique_papers": 11,
+  "papers": [
+    "DelloRusso2022",
+    "Gandia2003",
+    "Gandia2006",
+    "Idkaidek2011",
+    "Kovachevich2009",
+    "Polyakov2021",
+    "Putcha1991",
+    "Renwick1992",
+    "Rumble1991",
+    "Saivin1995",
+    "Schuck2005"
+  ],
+  "unique_drugs": 10,
+  "drugs": [
+    "Ciprofloxacin",
+    "Furosemide",
+    "Ibuprofen",
+    "Lidocaine",
+    "Nifedipine",
+    "Paracetamol",
+    "Promethazine",
+    "Propranolol",
+    "Scopolamine",
+    "Verapamil"
+  ],
+  "data_points": 190,
+  "notes": [
+    "Acetaminophen merged into Paracetamol",
+    "DelloRusso2022_* collapsed to one paper",
+    "Polyakov2021_SF collapsed into Polyakov2021",
+    "General ADME review row removed",
+    "All Cmax reported as \u00b5g/mL; mg/mL labels with Cmax<100 treated as unit typos"
+  ],
+  "anchors": {
+    "paracetamol_Cmax_ugmL": {
+      "raw_earth": 11.121,
+      "raw_space": 10.528,
+      "norm500_earth": 7.139,
+      "norm500_space": 5.999
+    },
+    "paracetamol_AUC_ughmL": {
+      "raw_earth": 31.115,
+      "raw_space": 33.322,
+      "norm500_earth": 21.76,
+      "norm500_space": 17.928
+    },
+    "linearity_assumption": "Paracetamol PK approximately dose-linear 500\u20131000 mg; Cmax/AUC scaled by 500/Dose_mg."
+  }
+}

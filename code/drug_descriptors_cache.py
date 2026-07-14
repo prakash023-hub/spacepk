@@ -31,7 +31,7 @@ DESCRIPTOR_CACHE = {
     'Modafinil': {'MW': 289.3560, 'logP': 2.4947, 'HBD': 0, 'HBA': 4, 'PSA': 64.10, 'rotb': 4, 'arom': 2, 'QED': 0.8112},
     'Nifedipine': {'MW': 346.3390, 'logP': 2.1756, 'HBD': 1, 'HBA': 7, 'PSA': 107.77, 'rotb': 4, 'arom': 1, 'QED': 0.5055},
     'Omeprazole': {'MW': 345.4240, 'logP': 2.8997, 'HBD': 1, 'HBA': 5, 'PSA': 77.10, 'rotb': 5, 'arom': 3, 'QED': 0.7692},
-    'Ondansetron': {'MW': 386.3330, 'logP': 2.8939, 'HBD': 0, 'HBA': 6, 'PSA': 61.82, 'rotb': 2, 'arom': 4, 'QED': 0.5323},
+    'Ondansetron': {'MW': 293.3670, 'logP': 2.3510, 'HBD': 0, 'HBA': 4, 'PSA': 39.82, 'rotb': 3, 'arom': 3, 'QED': 0.7200},
     'Paracetamol': {'MW': 151.1650, 'logP': 1.3506, 'HBD': 2, 'HBA': 2, 'PSA': 49.33, 'rotb': 1, 'arom': 1, 'QED': 0.5950},
     'Prednisone': {'MW': 358.4340, 'logP': 1.6217, 'HBD': 2, 'HBA': 5, 'PSA': 91.67, 'rotb': 2, 'arom': 0, 'QED': 0.7321},
     'Promethazine': {'MW': 284.4280, 'logP': 4.2410, 'HBD': 0, 'HBA': 3, 'PSA': 6.48, 'rotb': 4, 'arom': 2, 'QED': 0.8289},

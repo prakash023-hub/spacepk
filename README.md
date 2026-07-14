@@ -12,7 +12,13 @@ SpacePK connects three layers that are usually published separately:
 2. **7-compartment mechanistic PBPK** with acute / adaptation / chronic mission-phase physiology
 3. **Bayesian PopPK** with 95% credible intervals on space dose adjustment
 
-Literature anchors: Gandia 2003, Kovachevich 2009, Polyakov 2021, Leach 1981, Dello Russo 2022.
+Literature anchors: Gandia 2003, Kovachevich 2009, Polyakov 2021, Dello Russo 2022.
+
+> **Dose normalization (important):** pooled anchors are normalized to a common
+> 500 mg reference (`Cmax × 500/Dose`) because the source studies use different
+> doses (Gandia 1 g, Kovachevich 500 mg, Polyakov 625 mg). Paracetamol PK is
+> approximately dose-linear over 500–1000 mg. All PK code lives in a single
+> source of truth, `code/core.py`; every figure, table, and the app import it.
 
 ## Structure
 
@@ -22,11 +28,13 @@ spacepk/
 ├── run_app.sh          # Launch interactive app
 ├── run_pipeline.sh     # Run all layers + sensitivity
 ├── code/
+│   ├── core.py                 # SINGLE SOURCE OF TRUTH — PBPK engine + dose logic
 │   ├── drug_properties.py      # Layer 1 — RDKit + space modifiers
-│   ├── pbpk_model.py           # Layer 2 — 7-compartment PBPK
+│   ├── pbpk_model.py           # Layer 2 — compatibility shim → core.py
+│   ├── clean_dataset.py        # Data harmonization + dose normalization
 │   ├── bayesian_popPK.py       # Layer 3 — PyMC Bayesian PopPK
 │   └── mission_sensitivity.py  # Mission-day sensitivity analysis
-├── data/               # PK master datasets (63 rows, 15 papers)
+├── data/               # PK master datasets (cleaned: 11 papers, 10 drugs, 190 points)
 ├── figures/            # Output plots
 └── papers/             # Source PDFs
 ```
@@ -77,15 +85,9 @@ streamlit run app.py
 
 ## Drugs modeled
 
-**41 compounds** in the ISS / spaceflight medical catalog, including:
+The ISS / spaceflight medical catalog includes analgesics (Paracetamol, Ibuprofen, Tramadol), antibiotics (Ciprofloxacin, Amoxicillin, Doxycycline), antiemetics (Promethazine, Scopolamine, Ondansetron), and cardiovascular agents (Nifedipine, Verapamil, Propranolol, Furosemide) among others.
 
-- Analgesics: Paracetamol, Ibuprofen, Aspirin, Tramadol
-- Antibiotics: Ciprofloxacin, Amoxicillin, Azithromycin, Doxycycline
-- Antiemetics: Promethazine, Scopolamine, Meclizine, Ondansetron
-- Cardiovascular: Nifedipine, Verapamil, Propranolol, Metoprolol, Furosemide
-- And 25+ more ISS-relevant agents
-
-**12 drugs** have direct spaceflight / HDT PK literature; others use literature-estimated PK parameters.
+**10 drugs** have direct spaceflight / head-down-tilt (HDT) PK literature in the cleaned dataset (11 papers, 190 data points). Additional catalog compounds are modeled with literature-estimated PK parameters and are clearly labeled as predicted, not observed.
 
 ## GitHub
 

@@ -21,7 +21,7 @@ from iss_drug_catalog import (  # noqa: E402
     get_categories,
     search_drugs,
 )
-from pbpk_model import run_pbpk_analysis  # noqa: E402
+from core import run_pbpk_analysis  # noqa: E402  (single source of truth)
 
 st.set_page_config(
     page_title='SpacePK | ISS Pharmacokinetics',
@@ -82,7 +82,11 @@ def plot_pk_curves(result, drug, mission_days):
     t = result['t']
     fig = make_subplots(
         rows=1, cols=3,
-        subplot_titles=('Systemic blood', 'Liver', 'Peripheral tissue'),
+        subplot_titles=(
+            'Arterial / systemic',
+            'Liver',
+            'Peripheral tissue',
+        ),
         horizontal_spacing=0.08,
     )
     pairs = [
@@ -147,7 +151,7 @@ st.title('SpacePK — Spaceflight Pharmacokinetics')
 st.markdown(
     f'**{n_drugs} drugs** · **{n_iss} ISS medical kit** · '
     f'**{n_space} with spaceflight PK literature** · '
-    'RDKit → PBPK → dose recommendation'
+    'RDKit → **7-compartment PBPK** (Vd-calibrated) → Cmax-matched dose'
 )
 
 with st.expander('URLs for publication / Devpost / paper (important)'):
@@ -165,6 +169,8 @@ with st.expander('URLs for publication / Devpost / paper (important)'):
 | **Paper** | GitHub repo + figure files in `figures/` |
 
 **Deploy in 5 min:** GitHub → share.streamlit.io → New app → repo `prakash023-hub/spacepk` → main file `app.py` → Advanced → Python version 3.12 → use `environment.yml`.
+
+**After code fixes:** push to GitHub, then in Streamlit Cloud → Manage app → **Reboot** (clears `@st.cache_data`).
     """)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -237,8 +243,8 @@ dose_rec = result['dose_recommendation']
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric('Drug', drug)
 c2.metric('BCS class', str(profile['BCS']))
-c3.metric('Cmax (mg/L)', f"{pk_e['Cmax']:.3f}", delta=f"Space {pk_s['Cmax']:.3f}", delta_color='off')
-c4.metric('AUC (mg·h/L)', f"{pk_e['AUC']:.2f}", delta=f"Space {pk_s['AUC']:.2f}", delta_color='off')
+c3.metric('Cmax (mg/L)', f"{pk_e['Cmax']:.4g}", delta=f"Space {pk_s['Cmax']:.4g}", delta_color='off')
+c4.metric('AUC (mg·h/L)', f"{pk_e['AUC']:.4g}", delta=f"Space {pk_s['AUC']:.4g}", delta_color='off')
 if dose_rec:
     c5.metric('Space dose', f"{dose_rec['space_dose_mg']:.1f} mg")
     c6.metric('Change', f"{dose_rec['adjustment_pct']:+.0f}%")
@@ -251,6 +257,10 @@ tab_sim, tab_dose, tab_props, tab_catalog, tab_custom = st.tabs([
 ])
 
 with tab_sim:
+    st.caption(
+        'Engine: **7-compartment PBPK** with literature Vd enforced via tissue:plasma Kp. '
+        'Dose rule: **Cmax-matched** (primary); AUC-matched shown as sensitivity.'
+    )
     st.plotly_chart(plot_pk_curves(result, drug, mission_days), width='stretch')
 
     left, right = st.columns([1, 1])
@@ -278,9 +288,9 @@ with tab_dose:
     if dose_rec:
         d1, d2, d3, d4 = st.columns(4)
         d1.metric('Earth dose', f"{dose_rec['earth_dose_mg']:.0f} mg")
-        d2.metric('Recommended space dose', f"{dose_rec['space_dose_mg']:.0f} mg")
-        d3.metric('AUC-matched dose', f"{dose_rec.get('space_dose_auc_mg', 0):.0f} mg")
-        d4.metric('Adjustment', f"{dose_rec['adjustment_pct']:+.1f}%")
+        d2.metric('Space dose (Cmax-matched)', f"{dose_rec['space_dose_mg']:.0f} mg")
+        d3.metric('AUC-matched (sensitivity)', f"{dose_rec.get('space_dose_auc_mg', 0):.0f} mg")
+        d4.metric('Cmax adjustment', f"{dose_rec['adjustment_pct']:+.1f}%")
 
         factor = dose_rec['adjustment_factor']
         if factor > 1.15:
@@ -291,6 +301,8 @@ with tab_dose:
             st.success('Within ±15% — Earth dosing may be acceptable with monitoring.')
 
         st.info(
+            f"**Primary criterion: Cmax-matched.** AUC-matched is sensitivity only "
+            f"(ka↓ and F↑ can move Cmax and AUC in opposite directions).  \n"
             f"**Phase:** {profile['space_phase']} (mission day {mission_days}). "
             f"**{dose_rec['rationale']}** "
             f"Refs: Gandia 2003, Kovachevich 2009, Polyakov 2021."

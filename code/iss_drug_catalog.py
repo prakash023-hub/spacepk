@@ -122,7 +122,8 @@ ISS_DRUG_CATALOG = {
     'Ondansetron': {
         'category': 'Antiemetic (5-HT3)',
         'iss_kit': True,
-        'smiles': 'CN1C2=C(C(=O)N(C1=O)C3=CC=CC=C3)N(C=N2)C4=CC=C(C=C4)C(F)(F)F',
+        # PubChem CID 4595 — MW ≈ 293.4 (previous SMILES was wrong, MW~386)
+        'smiles': 'Cc1nccn1CC1CCc2c(c1=O)c1ccccc1n2C',
         'dose_mg': 8,
         'lit_F': 0.60, 'lit_Vd_Lkg': 2.5, 'lit_t12_h': 3.5,
         'lit_ka_h': 1.8, 'lit_ke_h': 0.198,
