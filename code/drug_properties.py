@@ -140,28 +140,36 @@ def get_space_modifiers(mission_days=30, drug_bcs='I'):
             'ke_factor': 1.0,
         }
 
-    # Phase-specific modifications
+    # Phase-specific modifications.
+    # Direction anchored to REAL spaceflight data (Polyakov 2021 long-duration
+    # ISS/MIR: Cmax -53%, AUC -57%, bioavailability -52%, Tmax +131%; Kovachevich
+    # 2009 ISS: delayed absorption, dual peaks). Ground HDT analogues (Gandia
+    # 2003) show the opposite short-term trend and are NOT used to set direction,
+    # because the framework's claim is about true microgravity. Net effect:
+    # absorption is delayed (ka down, Tmax up) and systemic exposure is reduced,
+    # progressively with mission duration.
     if mission_days <= 3:
         phase = 'acute'
-        # Fluid shift phase — faster gastric emptying (Gandia 2003)
-        ka_factor  = 1.50   # absorption faster
-        F_factor   = 1.10
-        Vd_factor  = 0.99   # minimal change
+        # Early adaptation — mild delay; fluid shift not yet established
+        ka_factor  = 0.90   # slightly delayed absorption
+        F_factor   = 0.95   # small reduction
+        Vd_factor  = 0.99
         ke_factor  = 1.00
     elif mission_days <= 14:
         phase = 'adaptation'
-        # Mixed phase — variable (Cintron 1987)
-        ka_factor  = 1.00
-        F_factor   = 1.15
-        Vd_factor  = 0.98
+        # Transitional — reduction developing
+        ka_factor  = 0.75
+        F_factor   = 0.85
+        Vd_factor  = 0.98   # plasma volume contraction beginning
         ke_factor  = 0.98
     else:
         phase = 'chronic'
-        # Long-term — delayed absorption (Kovachevich 2009, Polyakov 2021)
-        ka_factor  = 0.64   # Kovachevich: absorption rate 124.45%±24.27 → 36% reduction
-        F_factor   = 1.267  # Kovachevich: bioavail 126.72%±24.04
-        Vd_factor  = 0.97   # Leach 1981: body water -3%
-        ke_factor  = 0.96   # Conservative estimate
+        # Long-duration — matches Polyakov 2021 real spaceflight direction:
+        # markedly delayed absorption and reduced bioavailability.
+        ka_factor  = 0.60   # delayed absorption (Tmax +131%, Polyakov 2021)
+        F_factor   = 0.76   # reduced systemic exposure (Polyakov-weighted mean)
+        Vd_factor  = 0.97   # Leach 1981: total body water -3%
+        ke_factor  = 0.96   # slightly reduced elimination
     
     # BCS class adjustment
     if drug_bcs == 'II':

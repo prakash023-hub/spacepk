@@ -18,7 +18,13 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "data" / "space_pk_master_v2.csv"
+# space_pk_master_v2.csv (the original raw compilation) was removed from the
+# repo once its output below was established as the single source of truth.
+# space_pk_master_clean.csv already carries the raw Cmax/AUC value+unit
+# columns this script reads, so it now also serves as SRC: re-running this
+# script re-derives the harmonized columns + census in place and is
+# idempotent (mapped names / dropped rows are already applied).
+SRC = ROOT / "data" / "space_pk_master_clean.csv"
 OUT = ROOT / "data" / "space_pk_master_clean.csv"
 META = ROOT / "data" / "dataset_census.json"
 
