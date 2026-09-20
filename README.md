@@ -1,122 +1,60 @@
-# SpacePK Framework
+# SpacePK
 
-**Integrated cheminformatics → PBPK → Bayesian PopPK for Earth vs spaceflight pharmacokinetics**
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://prakash023-hub-spacepk-app-kua6sq.streamlit.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Physiologically-based pharmacokinetic modeling with mission-phase space physiology modifiers and Bayesian uncertainty quantification for astronaut dose adjustment.
+**An open, reproducible cheminformatics → PBPK → Bayesian framework for comparing Earth and spaceflight pharmacokinetics.**
 
-## Novel contribution
+> Research prototype and hypothesis-generating tool. **Not a clinical dosing system.** Not validated in astronauts; not approved by any space agency or medical authority.
 
-SpacePK connects three layers that are usually published separately:
+## Live demo
+https://prakash023-hub-spacepk-app-kua6sq.streamlit.app
 
-1. **RDKit molecular descriptors** → PBPK parameterization (BCS, P-gp, Lipinski)
-2. **7-compartment mechanistic PBPK** with acute / adaptation / chronic mission-phase physiology
-3. **Bayesian PopPK** with 95% credible intervals on space dose adjustment
+## What it does
+Select a drug + mission day + body weight → get Earth vs space concentration–time curves, mission-phase classification, and a model-derived (Cmax-matched) dose evaluation with uncertainty.
 
-Literature anchors: Gandia 2003, Kovachevich 2009, Polyakov 2021, Dello Russo 2022.
+## Pipeline
+- **Layer 1 — Cheminformatics:** RDKit molecular descriptors → BCS class, P-gp flag, Lipinski.
+- **Layer 2 — 7-compartment PBPK:** GI → portal → liver → arterial → venous → tissue → kidney, with mission-phase (acute/adaptation/chronic) physiological modifiers. Vd-calibrated Kp; no double first-pass.
+- **Layer 3 — Bayesian PopPK (PyMC):** posterior distributions + credible intervals on F, ka, ke, Vd. **Preliminary** (small in-flight data; ka weakly identifiable).
+- **Dose evaluation:** Cmax-matched primary, AUC-matched secondary.
 
-> **Dose normalization (important):** pooled anchors are normalized to a common
-> 500 mg reference (`Cmax × 500/Dose`) because the source studies use different
-> doses (Gandia 1 g, Kovachevich 500 mg, Polyakov 625 mg). Paracetamol PK is
-> approximately dose-linear over 500–1000 mg. All PK code lives in a single
-> source of truth, `code/core.py`; every figure, table, and the app import it.
+## Dataset (honest census)
+`data/space_pk_master_clean.csv` — cleaned analysis dataset. See `data/dataset_census.json` for reproducible counts.
 
-## Structure
+- **11 peer-reviewed studies**, **10 drugs with observed PK**, **224 observed parameter values**.
+- Real in-flight PK data exist for **paracetamol** (Shuttle/ISS/MIR) plus **one scopolamine/dextroamphetamine** Cmax (Shuttle).
+- All other observed drugs are **HDT / bed-rest analogue**, labelled in the `Evidence_Tier` column.
+- The wider ISS-formulary catalogue in the app is **model-predicted** and labelled as such — it is not observed data.
 
-```
-spacepk/
-├── app.py              # Streamlit flight-surgeon decision support UI
-├── run_app.sh          # Launch interactive app
-├── run_pipeline.sh     # Run all layers + sensitivity
-├── code/
-│   ├── core.py                 # SINGLE SOURCE OF TRUTH — PBPK engine + dose logic
-│   ├── drug_properties.py      # Layer 1 — RDKit + space modifiers
-│   ├── pbpk_model.py           # Layer 2 — compatibility shim → core.py
-│   ├── clean_dataset.py        # Data harmonization + dose normalization
-│   ├── bayesian_popPK.py       # Layer 3 — PyMC Bayesian PopPK
-│   └── mission_sensitivity.py  # Mission-day sensitivity analysis
-├── data/               # PK master datasets (cleaned: 11 papers, 10 drugs, 190 points)
-├── figures/            # Output plots
-└── papers/             # Source PDFs
-```
+Evidence tiers (`Evidence_Tier`): `earth_observed`, `spaceflight_real`, `analog_hdt_bedrest`, `model_predicted`.
 
-## Quick start
+## Status of results
+- **Earth calibration (paracetamol 500 mg):** model Cmax 4.65 vs 5.13 µg/mL literature (−9.4%); t½ +1%; AUC in range; Tmax predicted early (disclosed limitation).
+- **Earth vs space (dose-normalised):** paracetamol space exposure **lower** than Earth (directional; underlying data sparse and inconsistent).
+- Bayesian posteriors and multi-drug tables are regenerated from source; do not hand-edit.
 
-### Setup (Mac + Anaconda)
-
+## Reproduce
 ```bash
-conda install -c conda-forge rdkit pymc numpy scipy matplotlib arviz pytensor
-pip install "arviz>=0.17,<1.0" streamlit
-cd ~/spacepk
-chmod +x run_app.sh run_pipeline.sh
-```
-
-### Run full research pipeline
-
-```bash
-./run_pipeline.sh
-```
-
-Publication-quality Bayesian run (slower):
-
-```bash
-SPACEPK_FAST=0 ./run_pipeline.sh
-```
-
-### Launch interactive app
-
-```bash
-./run_app.sh
-```
-
-Or:
-
-```bash
+pip install -r requirements.txt
+python code/clean_dataset.py      # writes data/space_pk_master_clean.csv + dataset_census.json
+python code/pbpk_model.py         # Earth calibration + PBPK figures
+python code/mission_sensitivity.py
 streamlit run app.py
 ```
 
-## Layers
+## Paper
+Manuscript in preparation; preprint planned on bioRxiv prior to journal submission.
 
-| Layer | Script | Output |
-|-------|--------|--------|
-| 1 | `drug_properties.py` | Molecular properties + space-adjusted PK inputs |
-| 2 | `pbpk_model.py` | Earth vs space concentration curves + dose recommendation |
-| 3 | `bayesian_popPK.py` | Posterior distributions + dose 95% CI |
-| + | `mission_sensitivity.py` | Dose factor vs mission day (1–180) |
+## Author
+K. Prakash Raj, M.Pharm — Sri Balaji Vidyapeeth, Puducherry, India
+GitHub: [@prakash023-hub](https://github.com/prakash023-hub)
 
-## Drugs modeled
+## Citation
+See `CITATION.cff`.
 
-The ISS / spaceflight medical catalog includes analgesics (Paracetamol, Ibuprofen, Tramadol), antibiotics (Ciprofloxacin, Amoxicillin, Doxycycline), antiemetics (Promethazine, Scopolamine, Ondansetron), and cardiovascular agents (Nifedipine, Verapamil, Propranolol, Furosemide) among others.
+## Licence
+MIT — see `LICENSE`.
 
-**10 drugs** have direct spaceflight / head-down-tilt (HDT) PK literature in the cleaned dataset (11 papers, 190 data points). Additional catalog compounds are modeled with literature-estimated PK parameters and are clearly labeled as predicted, not observed.
-
-## GitHub
-
-https://github.com/prakash023-hub/spacepk
-
-## URLs for publication / submission
-
-| URL | Use in paper? |
-|-----|----------------|
-| `http://localhost:8501` | **No** — only on your Mac |
-| `http://192.168.x.x:8501` | **No** — home Wi‑Fi only |
-| `http://117.254.x.x:8501` | **No** — your public IP; dies when laptop sleeps |
-| **https://github.com/prakash023-hub/spacepk** | **Yes** — code & reproducibility |
-| **https://prakash023-hub-spacepk-app-kua6sq.streamlit.app** | **Yes** — live demo (after deploy) |
-
-### Deploy public demo (Streamlit Community Cloud)
-
-1. Push repo to GitHub (already done)
-2. Go to [share.streamlit.io](https://share.streamlit.io) → Sign in with GitHub
-3. **New app** → Repository `prakash023-hub/spacepk` → Branch `main` → Main file `app.py`
-4. Advanced settings → use `environment.yml` (includes RDKit via conda-forge)
-5. Deploy → copy URL like `https://spacepk.streamlit.app` into your paper/Devpost
-
-## Citation (draft)
-
-> SpacePK: An Integrated Cheminformatics–PBPK–Bayesian Framework for Earth–Spaceflight Pharmacokinetic Comparison. CPT: Pharmacometrics & Systems Pharmacology (in preparation).
-
-## Limitations
-
-- Small N in real spaceflight PK studies; Bayesian priors carry uncertainty
-- HDT is an Earth analog — not identical to microgravity
-- No formulation stability (radiation, humidity) or drug–drug interactions yet
+## Acknowledgement
+AI-assisted tools (Claude, Anthropic) were used for code structuring, data cleaning, and manuscript drafting. All scientific interpretation and conclusions are the author's own.

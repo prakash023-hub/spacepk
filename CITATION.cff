@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "SpacePK: An open cheminformatics-PBPK-Bayesian framework for Earth-spaceflight pharmacokinetic comparison"
+message: "If you use SpacePK, please cite it."
+type: software
+authors:
+  - family-names: "Prakash Raj"
+    given-names: "K."
+    affiliation: "Sri Balaji Vidyapeeth (Deemed University), Puducherry, India"
+version: "1.0.0"
+date-released: "2026-09-20"
+license: MIT
+url: "https://github.com/prakash023-hub/spacepk"
+repository-code: "https://github.com/prakash023-hub/spacepk"
+keywords:
+  - space pharmacokinetics
+  - PBPK
+  - Bayesian population pharmacokinetics
+  - microgravity
+  - head-down tilt
+  - Gaganyaan
