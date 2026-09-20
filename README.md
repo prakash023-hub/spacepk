@@ -22,12 +22,12 @@ Select a drug + mission day + body weight → get Earth vs space concentration�
 ## Dataset (honest census)
 `data/space_pk_master_clean.csv` — cleaned analysis dataset. See `data/dataset_census.json` for reproducible counts.
 
-- **11 peer-reviewed studies**, **10 drugs with observed PK**, **224 observed parameter values**.
+- **11 peer-reviewed studies**, **10 drugs with observed PK**, **190 observed parameter values**.
 - Real in-flight PK data exist for **paracetamol** (Shuttle/ISS/MIR) plus **one scopolamine/dextroamphetamine** Cmax (Shuttle).
-- All other observed drugs are **HDT / bed-rest analogue**, labelled in the `Evidence_Tier` column.
+- All other observed drugs are **HDT / bed-rest analogue**, identifiable from the `Gravity_Model` / `Condition` columns (e.g. `Real ISS`, `Real spaceflight` vs `HDT -6 degrees`).
 - The wider ISS-formulary catalogue in the app is **model-predicted** and labelled as such — it is not observed data.
 
-Evidence tiers (`Evidence_Tier`): `earth_observed`, `spaceflight_real`, `analog_hdt_bedrest`, `model_predicted`.
+Evidence tiers used above: `earth_observed`, `spaceflight_real`, `analog_hdt_bedrest`, `model_predicted` — a narrative classification of the studies, not a column in the CSV.
 
 ## Status of results
 - **Earth calibration (paracetamol 500 mg):** model Cmax 4.65 vs 5.13 µg/mL literature (−9.4%); t½ +1%; AUC in range; Tmax predicted early (disclosed limitation).
