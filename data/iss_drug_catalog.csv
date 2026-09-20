@@ -1,0 +1,42 @@
+Drug,Category,ISS Kit,Space PK Data,Dose (mg),Route,t½ (h),BCS
+Paracetamol,Analgesic,Yes,Yes,500.0,Oral,2.5,I
+Aspirin,Analgesic / Antiplatelet,Yes,Estimated,325.0,Oral,0.25,II
+Ibuprofen,NSAID,Yes,Yes,600.0,Oral,2.0,II
+Tramadol,Analgesic (Opioid),Yes,Estimated,50.0,Oral,6.0,I
+Ciprofloxacin,Antibiotic (Fluoroquinolone),Yes,Yes,250.0,Oral,4.0,IV
+Amoxicillin,Antibiotic (Penicillin),Yes,Estimated,500.0,Oral,1.2,III
+Azithromycin,Antibiotic (Macrolide),Yes,Estimated,250.0,Oral,68.0,IV
+Doxycycline,Antibiotic (Tetracycline),Yes,Estimated,100.0,Oral,18.0,IV
+Promethazine,Antiemetic / Antihistamine,Yes,Yes,25.0,Oral,12.0,I
+Scopolamine,Antiemetic / Motion sickness,Yes,Yes,0.4,Oral,8.0,I
+Meclizine,Antiemetic / Motion sickness,Yes,Estimated,25.0,Oral,6.0,II
+Ondansetron,Antiemetic (5-HT3),Yes,Estimated,8.0,Oral,3.5,III
+Metoclopramide,Antiemetic / Prokinetic,Yes,Estimated,10.0,Oral,5.0,III
+Diphenhydramine,Antihistamine / Sedative,Yes,Estimated,25.0,Oral,4.0,I
+Nifedipine,Cardiovascular (CCB),No,Yes,20.0,Oral,2.0,II
+Verapamil,Cardiovascular (CCB),No,Yes,80.0,Oral,6.0,II
+Propranolol,Cardiovascular (Beta-blocker),No,Yes,80.0,Oral,4.0,I
+Metoprolol,Cardiovascular (Beta-blocker),Yes,Estimated,50.0,Oral,3.5,I
+Furosemide,Diuretic,Yes,Yes,40.0,Oral,2.0,IV
+Enalapril,Cardiovascular (ACE inhibitor),Yes,Estimated,10.0,Oral,11.0,III
+Lorazepam,Anxiolytic / Sedative,Yes,Estimated,1.0,Oral,12.0,II
+Diazepam,Anxiolytic / Sedative,Yes,Estimated,5.0,Oral,48.0,II
+Midazolam,Sedative (Benzodiazepine),Yes,Estimated,5.0,Oral,2.5,II
+Dextroamphetamine,Stimulant (CNS),Yes,Yes,5.0,Oral,10.0,I
+Modafinil,Stimulant / Wakefulness,No,Estimated,200.0,Oral,15.0,II
+Famotidine,GI (H2 blocker),Yes,Estimated,20.0,Oral,3.0,III
+Omeprazole,GI (PPI),Yes,Estimated,20.0,Oral,1.0,II
+Loperamide,GI (Antidiarrheal),Yes,Estimated,2.0,Oral,11.0,II
+Bisacodyl,GI (Laxative),Yes,Estimated,5.0,Oral,8.0,IV
+Albuterol,Respiratory (Bronchodilator),Yes,Estimated,2.5,Oral,4.0,III
+Pseudoephedrine,Respiratory (Decongestant),Yes,Estimated,60.0,Oral,6.0,I
+Fluticasone,Respiratory (Corticosteroid),Yes,Estimated,0.1,Oral,7.0,IV
+Lidocaine,Local anesthetic / Antiarrhythmic,Yes,Yes,75.0,IV,1.8,I
+Epinephrine,Emergency (Vasopressor),Yes,Estimated,0.3,IV,0.05,III
+Atropine,Emergency (Anticholinergic),Yes,Estimated,0.5,IV,3.0,I
+Dexamethasone,Corticosteroid,Yes,Estimated,4.0,Oral,4.0,II
+Prednisone,Corticosteroid,Yes,Estimated,20.0,Oral,3.0,II
+Acetazolamide,Diuretic / Altitude sickness,Yes,Estimated,250.0,Oral,6.0,III
+Melatonin,Sleep / Circadian,Yes,Estimated,3.0,Oral,0.75,I
+Levetiracetam,Anticonvulsant,Yes,Estimated,500.0,Oral,7.0,I
+Ranitidine,GI (H2 blocker),Yes,Estimated,150.0,Oral,2.5,III
